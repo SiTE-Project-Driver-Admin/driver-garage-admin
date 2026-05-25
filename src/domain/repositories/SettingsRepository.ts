@@ -1,7 +1,7 @@
-import type { SettingsChangePassword } from "../entities/Settings";
+import type { AdminProfile, SettingsChangePassword } from "../entities/Settings";
 
 export interface SettingsRepository {
-
-  changePassword(settingsChangePassword: SettingsChangePassword): Promise<void>
+    getProfile(): Promise<AdminProfile>
+    changePassword(settingsChangePassword: SettingsChangePassword): Promise<void>
 
 }

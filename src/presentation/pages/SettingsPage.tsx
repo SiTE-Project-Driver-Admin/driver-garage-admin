@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   User,
   Lock,
@@ -13,15 +13,39 @@ import { SettingsRepositoryImpl } from "../../infrastructure/repositories/Settin
 export default function SettingsPage() {
   const repository = new SettingsRepositoryImpl()
 
-  const [fullName, setFullName] = useState("Admin User")
-  const [email, setEmail] = useState("admin@example.com")
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [role, setRole] = useState("")
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
 
   const [loading, setLoading] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(false)
+
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setProfileLoading(true)
+
+      try {
+        const profile = await repository.getProfile()
+
+        setName(profile.name)
+        setEmail(profile.email)
+        setRole(profile.role)
+
+      } catch (err: any) {
+        setError(err.message ?? "Failed to load profile")
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleChangePassword = async () => {
     setLoading(true)
@@ -35,21 +59,34 @@ export default function SettingsPage() {
       })
 
       setSuccess("Password changed successfully")
+
       setCurrentPassword("")
       setNewPassword("")
+      setTimeout(() => {
+        setSuccess("")
+      }, 5000)
+
     } catch (err: any) {
       setError(err.message ?? "Failed to change password")
+      setTimeout(() => {
+        setError("")
+      }, 5000)
+
     } finally {
       setLoading(false)
     }
   }
 
+  if (profileLoading) {
+    return <p className="p-6">Loading profile...</p>
+  }
+
   return (
     <div className="p-6 space-y-6">
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
+
         <p className="text-gray-500">
           Manage your profile and system settings
         </p>
@@ -57,53 +94,48 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-3 gap-6">
 
-        {/* LEFT */}
         <div className="col-span-2 space-y-6">
 
-          {/* Profile Card */}
           <div className="bg-white border rounded-xl p-6 shadow-sm">
 
             <div className="flex items-center gap-2 mb-6">
               <User className="w-5 h-5" />
-              <h2 className="text-xl font-semibold">My Profile</h2>
+
+              <h2 className="text-xl font-semibold">
+                My Profile
+              </h2>
             </div>
 
             <div className="space-y-4">
 
               <div>
-                <label className="text-sm text-gray-600 block mb-1">
+                <p className="text-sm text-gray-500 mb-1">
                   Full Name
-                </label>
+                </p>
 
-                <Input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                />
+                <div className="border rounded-lg px-4 py-3 bg-gray-50">
+                  {name || "N/A"}
+                </div>
               </div>
 
               <div>
-                <label className="text-sm text-gray-600 block mb-1">
+                <p className="text-sm text-gray-500 mb-1">
                   Email Address
-                </label>
+                </p>
 
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email Address"
-                />
+                <div className="border rounded-lg px-4 py-3 bg-gray-50">
+                  {email || "N/A"}
+                </div>
               </div>
 
             </div>
           </div>
 
-          {/* Change Password */}
           <div className="bg-white border rounded-xl p-6 shadow-sm">
 
             <div className="flex items-center gap-2 mb-6">
               <Lock className="w-5 h-5 text-red-500" />
+
               <h2 className="text-xl font-semibold">
                 Change Password
               </h2>
@@ -156,6 +188,7 @@ export default function SettingsPage() {
 
             <div className="flex items-center gap-2 mb-6">
               <ShieldCheck className="w-5 h-5 text-yellow-500" />
+
               <h2 className="text-xl font-semibold">
                 Account Information
               </h2>
@@ -166,16 +199,20 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
 
                 <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center text-lg font-bold">
-                  AD
+                  {name
+                    ?.split(" ")
+                    .map(name => name[0])
+                    .join("")
+                    .toUpperCase()}
                 </div>
 
                 <div>
                   <p className="font-semibold">
-                    Admin User
+                    {name}
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    admin@example.com
+                    {email}
                   </p>
                 </div>
               </div>
@@ -188,7 +225,7 @@ export default function SettingsPage() {
                   </span>
 
                   <span className="font-medium">
-                    Super Admin
+                    {role}
                   </span>
                 </div>
 
