@@ -14,7 +14,7 @@ import { ImageIcon, PencilIcon, TrashIcon } from "lucide-react"
 
 export default function EducationalContentPage() {
   const [contents, setContents] = useState<EducationContent[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<"ALL" | "SAFETY" | "MAINTENANCE" | "REPAIRS" | "TIPS">("ALL")
+  const [selectedCategory, setSelectedCategory] = useState<"ALL" | "SAFETY" | "MAINTENANCE" | "REPAIRS" | "TIPS" | "MANUALS">("ALL")
   const [showDialog, setShowDialog] = useState(false)
   const [selectedContent, setSelectedContent] = useState<EducationContent | null>(null)
 
@@ -35,6 +35,7 @@ export default function EducationalContentPage() {
         description: selectedContent.description,
         category: selectedContent.category,
         image: selectedContent.image ?? "",
+        pdfContent: selectedContent.pdfContent ?? "",
       })
     } else {
       setFormData({
@@ -42,6 +43,7 @@ export default function EducationalContentPage() {
         description: "",
         category: "ALL",
         image: "",
+        pdfContent: "",
       })
     }
   }, [selectedContent])
@@ -83,7 +85,7 @@ export default function EducationalContentPage() {
     }
     setShowDialog(false)
     setSelectedContent(null)
-    setFormData({ title: "", description: "", category: "ALL", image: "" })
+    setFormData({ title: "", description: "", category: "ALL", image: "", pdfContent: "" })
   }
 
   const [formData, setFormData] = useState({
@@ -91,6 +93,7 @@ export default function EducationalContentPage() {
     description: "",
     category: "ALL" as EducationContent["category"],
     image: "",
+    pdfContent: "",
   })
 
   const categoryLabels: Record<EducationContent["category"], string> = {
@@ -99,6 +102,7 @@ export default function EducationalContentPage() {
     MAINTENANCE: "Maintenance",
     REPAIRS: "Repairs",
     TIPS: "Tips",
+    MANUALS: "Manuals",
   }
 
   const columns: Column<EducationContent>[] = [
@@ -145,7 +149,7 @@ export default function EducationalContentPage() {
       </div>
 
       <div className="flex gap-4 mb-4">
-        {(["ALL", "MAINTENANCE", "SAFETY", "REPAIRS", "TIPS"] as const).map(cat => (
+        {(["ALL", "MAINTENANCE", "SAFETY", "REPAIRS", "TIPS", "MANUALS"] as const).map(cat => (
           <Button
             key={cat}
             variant={selectedCategory === cat ? "primary" : "secondary"}
@@ -176,6 +180,7 @@ export default function EducationalContentPage() {
                   description: formData.description,
                   category: formData.category,
                   image: formData.image,
+                  pdfContent: formData.pdfContent,
                   createdAt: "",
                   updatedAt: "",
                 })
@@ -268,6 +273,26 @@ export default function EducationalContentPage() {
                 />
               )}
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">PDF (optional)</label>
+
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  pdfContent: e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : "",
+                })
+              }
+            />
+
+            {formData.pdfContent && (
+              <p className="text-sm text-gray-600 mt-1">
+                Selected: {formData.pdfContent}
+              </p>
+            )}
           </div>
         </form>
       </Dialog>

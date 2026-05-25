@@ -4,8 +4,10 @@ export interface EducationContent{
     description: string;
     category: EducationCategory;
     image?: string;
+    pdfContent?: string;
+    hasPdf?: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
-export type EducationCategory = "ALL" | "SAFETY" | "MAINTENANCE" | "REPAIRS" | "TIPS"
+export type EducationCategory = "ALL" | "SAFETY" | "MAINTENANCE" | "REPAIRS" | "TIPS" | "MANUALS"
