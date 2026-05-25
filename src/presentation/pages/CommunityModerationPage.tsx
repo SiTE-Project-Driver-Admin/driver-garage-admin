@@ -1,131 +1,74 @@
 import { useEffect, useMemo, useState } from "react"
-import { Bell, CheckCircle, AlertTriangle } from "lucide-react"
-
+import { Flag, Trash2, XCircle } from "lucide-react"
 import Table from "../components/table/table"
 import Button from "../components/button/button"
 import Card from "../components/card/card"
-
 import { type Column } from "../components/table/table.types"
+import { CommunityReportRepositoryImpl } from "../../infrastructure/repositories/CommunityReportRepositoryImpl"
+import { type CommunityReport } from "../../domain/entities/CommunityReport"
 
-import { NotificationRepositoryImpl } from "../../infrastructure/repositories/NotificationRepositoryImpl"
-import { type Notification } from "../../domain/entities/Notification"
-
-export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+export default function CommunityReportsPage() {
+  const [reports, setReports] = useState<CommunityReport[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const repository = new NotificationRepositoryImpl()
+  const repository = new CommunityReportRepositoryImpl()
 
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const fetchReports = async () => {
       setLoading(true)
-
       try {
         const data = await repository.listAll()
-        setNotifications(data)
+        setReports(data)
       } catch (err: any) {
-        setError(err.message ?? "Failed to load notifications")
+        setError(err.message ?? "Failed to load reports")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchNotifications()
+    fetchReports()
   }, [])
 
+  // 📊 derived stats
   const stats = useMemo(() => {
     return {
-      unread: notifications.filter(n => !n.isRead).length,
-      read: notifications.filter(n => n.isRead).length,
-      total: notifications.length,
+      pending: reports.filter(r => r.status === "PENDING").length,
+      removed: reports.filter(r => r.status === "REMOVED").length,
+      dismissed: reports.filter(r => r.status === "DISMISSED").length,
     }
-  }, [notifications])
+  }, [reports])
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const updated = await repository.markAsRead(id)
-
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === updated.id
-            ? updated
-            : notification
-        )
+      const updated = await repository.updateStatus(id, status)
+      setReports(prev =>
+        prev.map(r => (r.id === updated.id ? updated : r))
       )
     } catch (err: any) {
-      setError(err.message ?? "Failed to mark notification as read")
-    }
-  }
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await repository.markAllAsRead()
-
-      setNotifications(prev =>
-        prev.map(notification => ({
-          ...notification,
-          isRead: true,
-        }))
-      )
-    } catch (err: any) {
-      setError(err.message ?? "Failed to mark all as read")
+      setError(err.message ?? "Failed to update report")
     }
   }
 
   const statusColors: Record<string, string> = {
-    READ: "bg-green-100 text-green-700",
-    UNREAD: "bg-yellow-100 text-yellow-700",
+    PENDING: "bg-yellow-100 text-yellow-700",
+    REMOVED: "bg-red-100 text-red-700",
+    DISMISSED: "bg-gray-200 text-gray-700",
   }
 
-  const columns: Column<Notification>[] = [
-    {
-      key: "title",
-      title: "Title",
-    },
+  const columns: Column<CommunityReport>[] = [
+    { key: "id", title: "ID" },
+    { key: "reason", title: "Reason" },
 
     {
-      key: "message",
-      title: "Message",
-    },
-
-    {
-      key: "type",
-      title: "Type",
+      key: "status",
+      title: "Status",
       render: (value) => {
         if (typeof value !== "string") return null
 
         return (
-          <div className="flex items-center gap-2">
-            {value === "WARNING" && (
-              <AlertTriangle className="w-4 h-4 text-yellow-500" />
-            )}
-
-            {value === "SUCCESS" && (
-              <CheckCircle className="w-4 h-4 text-green-500" />
-            )}
-
-            {value === "INFO" && (
-              <Bell className="w-4 h-4 text-blue-500" />
-            )}
-
-            <span>{value}</span>
-          </div>
-        )
-      },
-    },
-
-    {
-      key: "isRead",
-      title: "Status",
-      render: (value) => {
-        const status = value ? "READ" : "UNREAD"
-
-        return (
-          <span
-            className={`px-2 py-1 rounded ${statusColors[status]}`}
-          >
-            {status}
+          <span className={`px-2 py-1 rounded ${statusColors[value]}`}>
+            {value}
           </span>
         )
       },
@@ -143,72 +86,71 @@ export default function NotificationsPage() {
       title: "Actions",
       render: (_value, row) => (
         <div className="flex gap-2">
-          {!row.isRead && (
-            <Button
-              variant="link"
-              onClick={() => handleMarkAsRead(row.id)}
-            >
-              Mark as read
-            </Button>
-          )}
+          <Button
+            variant="link"
+            onClick={() => handleUpdateStatus(row.id, "REMOVED")}
+          >
+            <Trash2 className="w-4 h-4 text-red-600" />
+          </Button>
+
+          <Button
+            variant="link"
+            onClick={() => handleUpdateStatus(row.id, "DISMISSED")}
+          >
+            <XCircle className="w-4 h-4 text-gray-600" />
+          </Button>
+
+          <Button
+            variant="link"
+            onClick={() => handleUpdateStatus(row.id, "PENDING")}
+          >
+            <Flag className="w-4 h-4 text-yellow-600" />
+          </Button>
         </div>
       ),
     },
   ]
 
-  if (loading) return <p>Loading notifications...</p>
-
-  if (error) {
-    return <p className="text-red-500">{error}</p>
-  }
+  if (loading) return <p>Loading reports...</p>
+  if (error) return <p className="text-red-500">{error}</p>
 
   return (
     <div className="p-6 space-y-6">
 
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">
-          Notifications
-        </h1>
-
+        <h1 className="text-2xl font-bold">Community Reports</h1>
         <p className="text-gray-500">
-          System notifications and admin updates
+          Manage user reports, content moderation, and post actions
         </p>
       </div>
 
+      {/* Cards */}
       <div className="grid grid-cols-3 gap-4">
-
         <Card
-          title="Unread Notifications"
-          value={stats.unread}
-          icon={<Bell className="w-6 h-6 text-yellow-500" />}
+          title="Pending Reports"
+          value={stats.pending}
+          icon={<Flag className="w-6 h-6 text-yellow-500" />}
           color="text-yellow-600"
         />
 
         <Card
-          title="Read Notifications"
-          value={stats.read}
-          icon={<CheckCircle className="w-6 h-6 text-green-500" />}
-          color="text-green-600"
+          title="Posts Removed"
+          value={stats.removed}
+          icon={<Trash2 className="w-6 h-6 text-red-500" />}
+          color="text-red-600"
         />
 
         <Card
-          title="Total Notifications"
-          value={stats.total}
-          icon={<Bell className="w-6 h-6 text-blue-500" />}
-          color="text-blue-600"
+          title="Reports Dismissed"
+          value={stats.dismissed}
+          icon={<XCircle className="w-6 h-6 text-gray-500" />}
+          color="text-gray-600"
         />
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          variant="secondary"
-          onClick={handleMarkAllAsRead}
-        >
-          Mark all as read
-        </Button>
-      </div>
-
-      <Table columns={columns} data={notifications} />
+      {/* Table */}
+      <Table columns={columns} data={reports} />
     </div>
   )
 }
