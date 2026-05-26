@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { EyeIcon, Flag, Trash2, XCircle } from "lucide-react"
+import { EyeIcon, Flag, XCircle } from "lucide-react"
 import Table from "../components/table/table"
 import Button from "../components/button/button"
 import Card from "../components/card/card"
@@ -37,7 +37,6 @@ export default function CommunityReportsPage() {
   const stats = useMemo(() => {
     return {
       pending: reports.filter(r => r.status === "PENDING").length,
-      removed: reports.filter(r => r.status === "REMOVED").length,
       dismissed: reports.filter(r => r.status === "DISMISSED").length,
     }
   }, [reports])
@@ -174,13 +173,6 @@ export default function CommunityReportsPage() {
           value={stats.pending}
           icon={<Flag className="w-6 h-6 text-yellow-500" />}
           color="text-yellow-600"
-        />
-
-        <Card
-          title="Posts Removed"
-          value={stats.removed}
-          icon={<Trash2 className="w-6 h-6 text-red-500" />}
-          color="text-red-600"
         />
 
         <Card
