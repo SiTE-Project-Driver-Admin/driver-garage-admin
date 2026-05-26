@@ -11,6 +11,7 @@ export interface Garage {
     created_at: string
     updated_at: string
     status: GarageStatus
+    businessDocumentUrl?: string | null
 }
 
 export type GarageStatus = "PENDING" | "ACTIVE" | "REJECTED"

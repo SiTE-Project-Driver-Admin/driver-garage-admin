@@ -1,21 +1,87 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { type Column } from "../components/table/table.types"
 import { type User } from "../../domain/entities/UserManagement"
+import { type Admin } from "../../domain/entities/Admin"
 import { UserManagementRepositoryImpl } from "../../infrastructure/repositories/UserManagementRepositoryImpl"
+import { AdminRepositoryImpl } from "../../infrastructure/repositories/AdminRepositoryImpl"
 import Table from "../components/table/table"
 import Input from "../components/input/input"
 import Button from "../components/button/button"
+import Dialog from "../components/dialogBox/dialogBox"
 import { SearchUsersUseCase } from "../../application/useCases/UserManagement/searchUsers"
-import { Ban, AlertTriangle, CheckCircle, Users } from "lucide-react"
+import { ListAdminsUseCase } from "../../application/useCases/Admin/listAdmins"
+import { CreateAdminUseCase } from "../../application/useCases/Admin/createAdmin"
+import {
+  AlertTriangle,
+  Ban,
+  CheckCircle,
+  ShieldCheck,
+  UserPlus,
+  Users,
+} from "lucide-react"
 import Card from "../components/card/card"
+import { isSuperAdmin } from "../../application/useCases/loginAdmin"
+
+type Tab = "USERS" | "ADMINS"
 
 export default function UserManagementPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("USERS")
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Users Management</h1>
+        <p className="text-gray-500">
+          Manage platform users and admin accounts
+        </p>
+      </div>
+
+      <div className="flex gap-6 border-b">
+        <TabButton
+          label="Users"
+          active={activeTab === "USERS"}
+          onClick={() => setActiveTab("USERS")}
+        />
+        <TabButton
+          label="Admins"
+          active={activeTab === "ADMINS"}
+          onClick={() => setActiveTab("ADMINS")}
+        />
+      </div>
+
+      {activeTab === "USERS" ? <UsersTab /> : <AdminsTab />}
+    </div>
+  )
+}
+
+function TabButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`pb-2 -mb-px px-1 font-medium transition border-b-2 ${
+        active
+          ? "border-yellow-400 text-black"
+          : "border-transparent text-gray-500 hover:text-black"
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function UsersTab() {
   const [users, setUsers] = useState<User[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const repository = new UserManagementRepositoryImpl()
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -23,36 +89,36 @@ export default function UserManagementPage() {
     blocked: 0,
   })
 
+  const repository = useMemo(() => new UserManagementRepositoryImpl(), [])
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
         const [usersData, statsData] = await Promise.all([
           repository.findAll(),
-          repository.getStats()
+          repository.getStats(),
         ])
-
         setUsers(usersData)
         setStats(statsData)
-      } catch (err: any) {
-        setError(err.message ?? "Failed to load users")
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load users"
+        setError(message)
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
-  }, [])
+  }, [repository])
 
   const handleSearch = async (term: string) => {
     setSearch(term)
-
     if (!term) {
       const data = await repository.findAll()
       setUsers(data)
       return
     }
-
     const useCase = new SearchUsersUseCase(repository)
     const results = await useCase.execute(term)
     setUsers(results)
@@ -60,17 +126,15 @@ export default function UserManagementPage() {
 
   const handleWarn = async (id: string) => {
     const updated = await repository.warnUser(id)
-    setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)))
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
   }
-
   const handleBlock = async (id: string) => {
     const updated = await repository.blockUser(id)
-    setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)))
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
   }
-
   const handleActivate = async (id: string) => {
     const updated = await repository.activateUser(id)
-    setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)))
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
   }
 
   const statusColors: Record<string, string> = {
@@ -79,7 +143,6 @@ export default function UserManagementPage() {
     BLOCKED: "bg-red-100 text-red-700",
     WARNED: "bg-yellow-100 text-yellow-700",
   }
-
   const roleColors: Record<string, string> = {
     DRIVER: "bg-blue-100 text-blue-700",
     ADMIN: "bg-purple-100 text-purple-700",
@@ -94,7 +157,7 @@ export default function UserManagementPage() {
       title: "Role",
       render: (value) => (
         <span className={`px-2 py-1 rounded ${roleColors[value as string]}`}>
-          {value}
+          {value as string}
         </span>
       ),
     },
@@ -103,7 +166,7 @@ export default function UserManagementPage() {
       title: "Status",
       render: (value) => (
         <span className={`px-2 py-1 rounded ${statusColors[value as string]}`}>
-          {value}
+          {value as string}
         </span>
       ),
     },
@@ -135,39 +198,31 @@ export default function UserManagementPage() {
   if (error) return <p className="text-red-500">{error}</p>
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Users Management</h1>
-        <p className="text-gray-500">Manage platform users and admin accounts</p>
-      </div>
-
+    <div className="space-y-6">
       <div className="grid grid-cols-4 gap-4">
-          <Card
-            title="Total Users"
-            value={stats.total}
-            icon={<Users className="w-6 h-6" />}
-          />
-
-          <Card
-            title="Active Users"
-            value={stats.active}
-            icon={<CheckCircle className="w-6 h-6 text-green-500" />}
-            color="text-green-600"
-          />
-
-          <Card
-            title="Warned Users"
-            value={stats.warned}
-            icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
-            color="text-yellow-600"
-          />
-
-          <Card
-            title="Blocked Users"
-            value={stats.blocked}
-            icon={<Ban className="w-6 h-6 text-red-500" />}
-            color="text-red-600"
-          />
+        <Card
+          title="Total Users"
+          value={stats.total}
+          icon={<Users className="w-6 h-6" />}
+        />
+        <Card
+          title="Active Users"
+          value={stats.active}
+          icon={<CheckCircle className="w-6 h-6 text-green-500" />}
+          color="text-green-600"
+        />
+        <Card
+          title="Warned Users"
+          value={stats.warned}
+          icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
+          color="text-yellow-600"
+        />
+        <Card
+          title="Blocked Users"
+          value={stats.blocked}
+          icon={<Ban className="w-6 h-6 text-red-500" />}
+          color="text-red-600"
+        />
       </div>
 
       <Input
@@ -181,6 +236,241 @@ export default function UserManagementPage() {
       ) : (
         <Table columns={columns} data={users} />
       )}
+    </div>
+  )
+}
+
+function AdminsTab() {
+  const [admins, setAdmins] = useState<Admin[]>([])
+  const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [form, setForm] = useState({ name: "", email: "", password: "" })
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const canManage = isSuperAdmin()
+  const repository = useMemo(() => new AdminRepositoryImpl(), [])
+
+  useEffect(() => {
+    if (!canManage) return
+    const fetchAdmins = async () => {
+      setLoading(true)
+      try {
+        const useCase = new ListAdminsUseCase(repository)
+        const data = await useCase.execute()
+        setAdmins(data)
+      } catch (err) {
+        const message =
+          (err as { response?: { data?: { error?: string } } })?.response?.data
+            ?.error ??
+          (err instanceof Error ? err.message : "Failed to load admins")
+        setError(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAdmins()
+  }, [repository, canManage])
+
+  const filteredAdmins = useMemo(() => {
+    if (!search) return admins
+    const term = search.toLowerCase()
+    return admins.filter(
+      (a) =>
+        a.name.toLowerCase().includes(term) ||
+        a.email.toLowerCase().includes(term)
+    )
+  }, [admins, search])
+
+  const stats = useMemo(() => {
+    const total = admins.length
+    const superCount = admins.filter((a) => a.role === "SUPER_ADMIN").length
+    return { total, active: total, superCount }
+  }, [admins])
+
+  const handleOpenDialog = () => {
+    setForm({ name: "", email: "", password: "" })
+    setFormError(null)
+    setDialogOpen(true)
+  }
+
+  const handleSave = async () => {
+    setFormError(null)
+    if (!form.name.trim() || !form.email.trim() || !form.password) {
+      setFormError("Name, email and password are required")
+      return
+    }
+    if (form.password.length < 6) {
+      setFormError("Password must be at least 6 characters")
+      return
+    }
+    setSaving(true)
+    try {
+      const useCase = new CreateAdminUseCase(repository)
+      const created = await useCase.execute({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      })
+      setAdmins((prev) => [created, ...prev])
+      setDialogOpen(false)
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ??
+        (err instanceof Error ? err.message : "Failed to create admin")
+      setFormError(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const roleColors: Record<string, string> = {
+    ADMIN: "bg-green-100 text-green-700",
+    SUPER_ADMIN: "bg-purple-100 text-purple-700",
+  }
+  const roleLabels: Record<string, string> = {
+    ADMIN: "Admin",
+    SUPER_ADMIN: "Super Admin",
+  }
+
+  const columns: Column<Admin>[] = [
+    { key: "name", title: "Name" },
+    { key: "email", title: "Email" },
+    {
+      key: "role",
+      title: "Role",
+      render: (value) => (
+        <span className={`px-2 py-1 rounded ${roleColors[value as string]}`}>
+          {roleLabels[value as string] ?? (value as string)}
+        </span>
+      ),
+    },
+    {
+      key: "id",
+      title: "Status",
+      render: () => (
+        <span className="px-2 py-1 rounded bg-green-100 text-green-700">
+          Active
+        </span>
+      ),
+    },
+    {
+      key: "createdAt",
+      title: "Join Date",
+      render: (value) => new Date(value as string).toLocaleDateString(),
+    },
+  ]
+
+  if (!canManage) {
+    return (
+      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+        Only super admins can view and manage admin accounts.
+      </div>
+    )
+  }
+
+  if (loading) return <p>Loading admins...</p>
+  if (error) return <p className="text-red-500">{error}</p>
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <Card
+          title="Total Admins"
+          value={stats.total}
+          icon={<Users className="w-6 h-6" />}
+        />
+        <Card
+          title="Active Admins"
+          value={stats.active}
+          icon={<CheckCircle className="w-6 h-6 text-green-500" />}
+          color="text-green-600"
+        />
+        <Card
+          title="Super Admins"
+          value={stats.superCount}
+          icon={<ShieldCheck className="w-6 h-6 text-purple-500" />}
+          color="text-purple-600"
+        />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <Input
+            type="text"
+            placeholder="Search admins by name or email..."
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Button variant="primary" onClick={handleOpenDialog}>
+          <span className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />
+            Add Admin
+          </span>
+        </Button>
+      </div>
+
+      {filteredAdmins.length === 0 && search ? (
+        <p className="text-gray-500">No admins found for "{search}"</p>
+      ) : (
+        <Table columns={columns} data={filteredAdmins} />
+      )}
+
+      <Dialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        title="Add New Admin"
+        actions={
+          <>
+            <Button variant="primary" onClick={handleSave} disabled={saving}>
+              {saving ? "Creating..." : "Create Admin"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <form className="flex flex-col gap-4">
+          {formError && <p className="text-red-600 text-sm">{formError}</p>}
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              placeholder="Enter admin's name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              placeholder="Enter admin's email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="At least 6 characters"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+        </form>
+      </Dialog>
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { BookOpen, Car, LayoutDashboard, Settings, ShieldCheck, Users } from "lu
 const menuItems: SidebarItem[] = [
     { label: "Dashboard Overview", path: "/dashboard", icon: LayoutDashboard },
     { label: "Garage Approvals", path: "/garage-approvals", icon: Car },
-    { label: "User Management", path: "/users", icon: Users },
+    { label: "Users Management", path: "/users", icon: Users },
     { label: "Educational Content", path: "/educational-content", icon: BookOpen },
     { label: "Community Moderation", path: "/community-moderation", icon: ShieldCheck },
     { label: "Settings", path: "/settings", icon: Settings },
