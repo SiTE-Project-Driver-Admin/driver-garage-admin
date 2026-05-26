@@ -2,13 +2,14 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import Sidebar from "../sidebar/sidebar"
 import Header from "../header/header"
 import { headerTitles } from "../header/headerTitles"
+import { logoutAdmin } from "../../../application/useCases/loginAdmin"
 
 export default function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken")
+    logoutAdmin()
     navigate("/")
   }
 

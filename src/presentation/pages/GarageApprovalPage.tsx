@@ -92,6 +92,15 @@ export default function GarageApprovalsPage() {
         REJECTED: "bg-red-100 text-red-800",
     }
 
+    const resolvePdfUrl = (url?: string | null): string | null => {
+        if (!url) return null
+        if (/^https?:\/\//i.test(url)) return url
+        const base =
+            (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+            "http://localhost:4000"
+        return `${base.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
+    }
+
     const columns: Column<Garage>[] = [
         { key: "name", title: "Name" },
         { key: "email", title: "Email" },
@@ -169,6 +178,35 @@ export default function GarageApprovalsPage() {
                         <p>Phone Number: {selectedGarage.phone}</p>
                         <p>Location: {selectedGarage.location}</p>
                         <p>Status: {selectedGarage.status}</p>
+
+                        <div className="mt-4">
+                            <p className="font-medium mb-2">Business Document</p>
+                            {(() => {
+                                const pdfUrl = resolvePdfUrl(selectedGarage.businessDocumentUrl)
+                                if (!pdfUrl) {
+                                    return (
+                                        <p className="text-gray-500">No document uploaded.</p>
+                                    )
+                                }
+                                return (
+                                    <div className="space-y-2">
+                                        <iframe
+                                            src={pdfUrl}
+                                            title="Business Document"
+                                            className="w-full h-96 border rounded"
+                                        />
+                                        <a
+                                            href={pdfUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block text-blue-600 underline"
+                                        >
+                                            Open document in new tab
+                                        </a>
+                                    </div>
+                                )
+                            })()}
+                        </div>
                     </>
                 )}
             </Dialog>
