@@ -1,8 +1,8 @@
 import type { CommunityReport } from "../../domain/entities/CommunityReport"
-import type { ICommunityReportRepository } from "../../domain/repositories/CommunityReportRepository"
+import type { CommunityReportRepository } from "../../domain/repositories/CommunityReportRepository"
 import { axiosClient } from "../api/axiosClient"
 
-export class CommunityReportRepositoryImpl implements ICommunityReportRepository {
+export class CommunityReportRepositoryImpl implements CommunityReportRepository {
 
   async listAll(status?: string): Promise<CommunityReport[]> {
     const response = await axiosClient.get("/admin/community/reports", {
@@ -16,11 +16,19 @@ export class CommunityReportRepositoryImpl implements ICommunityReportRepository
     return response.data ?? null
   }
 
-  async updateStatus(id: string, status: string): Promise<CommunityReport> {
+  async dismissReport(id: string): Promise<CommunityReport> {
     const response = await axiosClient.patch(
-      `/admin/community/reports/${id}/status`,
-      { status }
+      `/admin/community/reports/${id}/dismiss`
     )
+
+    return response.data
+  }
+
+  async takeDownPost(id: string): Promise<CommunityReport> {
+    const response = await axiosClient.patch(
+      `/admin/community/reports/${id}/take-down-post`
+    )
+
     return response.data
   }
 }
