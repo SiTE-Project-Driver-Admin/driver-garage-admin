@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom"
 import { useState } from "react"
 import type { HeaderProps } from "./header.types"
 import { getCurrentAdmin } from "../../../application/useCases/loginAdmin"
+import { useNotifications } from "../../hooks/useNotifications"
+
 
 const Header = ({ title = "Dashboard", onLogout }: HeaderProps) => {
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const admin = getCurrentAdmin()
+  const { unreadCount } = useNotifications()
 
   const displayName = admin?.name ?? "Admin"
   const roleLabel =
@@ -36,7 +39,7 @@ const Header = ({ title = "Dashboard", onLogout }: HeaderProps) => {
         >
           <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-            3
+            {unreadCount}
           </span>
         </button>
 
