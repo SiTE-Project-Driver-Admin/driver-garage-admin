@@ -80,24 +80,9 @@ export default function UserManagementPage() {
     WARNED: "bg-yellow-100 text-yellow-700",
   }
 
-  const roleColors: Record<string, string> = {
-    DRIVER: "bg-blue-100 text-blue-700",
-    ADMIN: "bg-purple-100 text-purple-700",
-    GARAGE: "bg-gray-200 text-gray-700",
-  }
-
   const columns: Column<User>[] = [
     { key: "name", title: "Name" },
     { key: "email", title: "Email" },
-    {
-      key: "role",
-      title: "Role",
-      render: (value) => (
-        <span className={`px-2 py-1 rounded ${roleColors[value as string]}`}>
-          {value}
-        </span>
-      ),
-    },
     {
       key: "status",
       title: "Status",
