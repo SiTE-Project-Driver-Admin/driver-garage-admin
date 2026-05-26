@@ -8,9 +8,11 @@ type ApiActivity = {
   title?: string
   action?: string
   type?: string
+  detail?: string
   message?: string
   description?: string
   details?: string
+  subtitle?: string
   meta?: {
     title?: string
     message?: string
@@ -19,6 +21,7 @@ type ApiActivity = {
   }
   createdAt?: string
   timestamp?: string
+  referenceId?: string
 }
 
 export class ActivityRepositoryImpl implements ActivityRepository {
@@ -56,11 +59,13 @@ export class ActivityRepositoryImpl implements ActivityRepository {
         item.meta?.title ??
         "Activity update",
       detail:
+        item.detail ??
         item.message ??
         item.description ??
         item.details ??
-        item.meta?.message ??
+        item.subtitle ??
         item.meta?.detail ??
+        item.meta?.message ??
         item.meta?.description ??
         "No additional details",
       createdAt: item.createdAt ?? item.timestamp ?? new Date().toISOString(),
