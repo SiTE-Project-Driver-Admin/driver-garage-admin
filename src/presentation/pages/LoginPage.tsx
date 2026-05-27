@@ -7,16 +7,17 @@ import { loginAdmin } from "../../application/useCases/loginAdmin"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const navigate = useNavigate()
 
   const handleLogin = async () => {
     const authRepo = new AuthRepositoryImpl()
     try {
-      await loginAdmin(authRepo, email, password)
-
-      navigate("/dashboard") 
+      const res = await loginAdmin(authRepo, email, password)
+      localStorage.setItem("adminToken", res.token)
+      navigate("/dashboard")
     } catch (error) {
-      alert("Invalid credentials")
+      setError("Invalid credentials")
     }
   }
 
@@ -48,6 +49,7 @@ export default function LoginPage() {
                 className="w-full p-3 outline-none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                data-testid="email-input"
               />
             </div>
           </div>
@@ -66,17 +68,26 @@ export default function LoginPage() {
                 className="w-full p-3 outline-none"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                data-testid="password-input"
               />
             </div>
           </div>
 
           <button
             onClick={handleLogin}
+            data-testid="login-button"
             className="w-full bg-yellow-400 text-black p-3 rounded-lg font-medium hover:bg-yellow-500 transition"
           >
             Sign In
           </button>
-
+          {error && (
+            <p
+              className="text-red-500 text-sm"
+              data-testid="login-error"
+            >
+              {error}
+            </p>
+          )}
         </div>
 
       </div>
