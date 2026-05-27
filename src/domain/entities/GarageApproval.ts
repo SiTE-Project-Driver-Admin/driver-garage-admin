@@ -3,7 +3,7 @@ export interface Garage {
     name: string
     email: string
     phone: string
-    location: string
+    address: string
     services_offered: string[]
     other_services: string[]
     lattitude?: number
@@ -11,7 +11,7 @@ export interface Garage {
     created_at: string
     updated_at: string
     status: GarageStatus
-    businessDocumentUrl?: string | null
+    businessDocument?: string | null
 }
 
 export type GarageStatus = "PENDING" | "ACTIVE" | "REJECTED"
