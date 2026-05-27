@@ -99,11 +99,11 @@ export default function NotificationsPage() {
     <div className="p-6 space-y-6">
 
       <div>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold" data-testid="page-title">
           Notifications
         </h1>
 
-        <p className="text-gray-500">
+        <p className="text-gray-500" data-testid="notifications-subtitle">
           System notifications and admin updates
         </p>
       </div>
@@ -118,6 +118,7 @@ export default function NotificationsPage() {
         <Button
           variant="secondary"
           onClick={handleMarkAllAsRead}
+          data-testid="mark-all-read"
         >
           Mark all as read
         </Button>
