@@ -1,11 +1,5 @@
 import { test, expect } from "@playwright/test"
 
-// test.beforeEach(async ({ page }) => {
-//   await page.addInitScript(() => {
-//     localStorage.setItem("adminToken", "fake-token")
-//   })
-// })
-
 test("admin can login successfully", async ({ page }) => {
   await page.goto("http://localhost:5173")
 
@@ -13,7 +7,6 @@ test("admin can login successfully", async ({ page }) => {
   await page.getByTestId("password-input").fill("admin123")
   await page.getByTestId("login-button").click()
 
-//   await page.waitForURL("**/dashboard")
   await expect(page.getByText("Dashboard")).toBeVisible()
 })
 
