@@ -105,7 +105,7 @@ export default function GarageApprovalsPage() {
         { key: "name", title: "Name" },
         { key: "email", title: "Email" },
         { key: "phone", title: "Phone" },
-        { key: "location", title: "Location" },
+        { key: "address", title: "Address" },
         {
             key: "status",
             title: "Status",
@@ -176,13 +176,13 @@ export default function GarageApprovalsPage() {
                         <p>Garage Name: {selectedGarage.name}</p>
                         <p>Email: {selectedGarage.email}</p>
                         <p>Phone Number: {selectedGarage.phone}</p>
-                        <p>Location: {selectedGarage.location}</p>
+                        <p>Location: {selectedGarage.address}</p>
                         <p>Status: {selectedGarage.status}</p>
 
                         <div className="mt-4">
                             <p className="font-medium mb-2">Business Document</p>
                             {(() => {
-                                const pdfUrl = resolvePdfUrl(selectedGarage.businessDocumentUrl)
+                                const pdfUrl = resolvePdfUrl(selectedGarage.businessDocument)
                                 if (!pdfUrl) {
                                     return (
                                         <p className="text-gray-500">No document uploaded.</p>
