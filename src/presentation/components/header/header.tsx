@@ -45,6 +45,7 @@ const Header = ({ title = "Dashboard", onLogout }: HeaderProps) => {
 
         <div className="relative">
           <button
+            data-testid="profile-menu-button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 hover:text-yellow-500 transition"
           >
@@ -67,6 +68,7 @@ const Header = ({ title = "Dashboard", onLogout }: HeaderProps) => {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-md z-10">
               <button
+              data-testid="logout-button"
                 onClick={onLogout}
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
               >
