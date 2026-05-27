@@ -98,7 +98,6 @@ export default function NotificationsPage() {
   return (
     <div className="p-6 space-y-6">
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">
           Notifications
@@ -109,14 +108,12 @@ export default function NotificationsPage() {
         </p>
       </div>
 
-      {/* Unread Card */}
       <Card
         title="Unread Notifications"
         value={unreadCount}
         icon={<Bell className="w-6 h-6 text-yellow-500" />}
       />
 
-      {/* Actions */}
       <div className="flex justify-end">
         <Button
           variant="secondary"
@@ -126,7 +123,6 @@ export default function NotificationsPage() {
         </Button>
       </div>
 
-      {/* Notifications List */}
       <div className="bg-white rounded-xl border divide-y">
 
         {notifications.map(notification => (
