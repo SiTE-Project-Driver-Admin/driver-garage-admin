@@ -46,6 +46,5 @@ test("can block a user", async ({ page }) => {
 
   await firstRow.getByRole("button").nth(1).click()
 
-  // optional: verify UI update (depends on backend response)
   await expect(firstRow).toBeVisible()
 })
