@@ -1,8 +1,15 @@
 import type { TableProps } from "./table.types";
 
-const Table = <T extends object>({ columns, data }: TableProps<T>) => {
+const Table = <T extends object>({
+  columns,
+  data,
+  ...rest
+}: TableProps<T> & React.TableHTMLAttributes<HTMLTableElement>) => {
   return (
-    <table className="w-full border-collapse bg-white shadow-sm">
+    <table
+      {...rest}
+      className="w-full border-collapse bg-white shadow-sm"
+    >
       <thead>
         <tr>
           {columns.map((col) => (
