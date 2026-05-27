@@ -30,8 +30,8 @@ export default function UserManagementPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Users Management</h1>
-        <p className="text-gray-500">
+        <h1 className="text-2xl font-bold" data-testid="users-page-title">Users Management</h1>
+        <p className="text-gray-500" data-testid="users-page-subtitle">
           Manage platform users and admin accounts
         </p>
       </div>
@@ -190,24 +190,28 @@ function UsersTab() {
           title="Total Users"
           value={stats.total}
           icon={<Users className="w-6 h-6" />}
+          data-testid="stat-total-users"
         />
         <Card
           title="Active Users"
           value={stats.active}
           icon={<CheckCircle className="w-6 h-6 text-green-500" />}
           color="text-green-600"
+          data-testid="stat-active-users"
         />
         <Card
           title="Warned Users"
           value={stats.warned}
           icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
           color="text-yellow-600"
+          data-testid="stat-warned-users"
         />
         <Card
           title="Blocked Users"
           value={stats.blocked}
           icon={<Ban className="w-6 h-6 text-red-500" />}
           color="text-red-600"
+          data-testid="stat-blocked-users"
         />
       </div>
 
@@ -220,7 +224,7 @@ function UsersTab() {
       {users.length === 0 && search ? (
         <p className="text-gray-500">No users found for "{search}"</p>
       ) : (
-        <Table columns={columns} data={users} />
+        <Table columns={columns} data={users} data-testid="users-table" />
       )}
     </div>
   )
