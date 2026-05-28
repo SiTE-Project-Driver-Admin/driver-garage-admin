@@ -104,6 +104,26 @@ export default function CommunityReportsPage() {
   }
 
   const columns: Column<CommunityReport>[] = [
+    {
+      key: "post",
+      title: "Authored By",
+      render: (_value, row) => (
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {row.post.authorName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "post",
+      title: "Author Email",
+      render: (_value, row) => (
+        <span className="font-medium">
+          {row.post.author.email}
+        </span>
+      ),
+    },
     { key: "reason", title: "Reason" },
     {
       key: "reporter",
@@ -208,6 +228,16 @@ export default function CommunityReportsPage() {
       >
         {selectedReport && (
           <div className="space-y-3">
+
+            <div>
+              <p className="font-semibold">Author</p>
+              <p>{selectedReport.post.authorName}</p>
+            </div>
+
+            <div>
+              <p className="font-semibold">Author Email</p>
+              <p>{selectedReport.post.author.email}</p>
+            </div>
 
             <div>
               <p className="font-semibold">Reason</p>
