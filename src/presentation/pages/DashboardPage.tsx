@@ -164,7 +164,6 @@ export default function DashboardPage() {
     const activityTime = new Date(date).getTime()
 
     if (Number.isNaN(activityTime)) return "Just now"
-
     const diffMinutes = Math.floor((now - activityTime) / (1000 * 60))
 
     if (diffMinutes < 1) return "Just now"
