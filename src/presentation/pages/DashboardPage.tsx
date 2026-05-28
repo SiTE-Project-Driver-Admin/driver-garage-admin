@@ -9,6 +9,8 @@ import { SystemAlertRepositoryImpl } from "../../infrastructure/repositories/Sys
 import { NotificationRepositoryImpl } from "../../infrastructure/repositories/NotificationRepositoryImpl"
 import Card from "../components/card/card"
 import { Users, CheckCircle, AlertTriangle } from "lucide-react"
+import type { Garage } from "../../domain/entities/GarageApproval"
+import { GarageRepositoryImpl } from "../../infrastructure/repositories/GarageRepositoryImpl"
 
 const ALERT_ROUTES: Record<string, string> = {
   "review now": "/garage-approvals",
@@ -46,13 +48,14 @@ export default function DashboardPage() {
   const [activitiesError, setActivitiesError] = useState<string | null>(null)
   const [alertsLoading, setAlertsLoading] = useState(false)
   const [alertsError, setAlertsError] = useState<string | null>(null)
+  const [garages, setGarages] = useState<Garage[]>([])
 
   useEffect(() => {
     const userRepository = new UserManagementRepositoryImpl()
     const activityRepository = new ActivityRepositoryImpl()
     const systemAlertRepository = new SystemAlertRepositoryImpl()
     const notificationRepository = new NotificationRepositoryImpl()
-
+    const garageRepository = new GarageRepositoryImpl()
     const fetchUsers = async () => {
       setLoading(true)
       try {
@@ -74,8 +77,8 @@ export default function DashboardPage() {
       } catch (err: any) {
         setActivitiesError(
           err?.response?.data?.message ??
-            err?.message ??
-            "Failed to load recent activities"
+          err?.message ??
+          "Failed to load recent activities"
         )
       } finally {
         setActivitiesLoading(false)
@@ -91,11 +94,20 @@ export default function DashboardPage() {
       } catch (err: any) {
         setAlertsError(
           err?.response?.data?.message ??
-            err?.message ??
-            "Failed to load system alerts"
+          err?.message ??
+          "Failed to load system alerts"
         )
       } finally {
         setAlertsLoading(false)
+      }
+    }
+
+    const fetchGarages = async () => {
+      try {
+        const data = await garageRepository.findAll()
+        setGarages(data)
+      } catch {
+        setGarages([])
       }
     }
 
@@ -113,6 +125,7 @@ export default function DashboardPage() {
     fetchActivities()
     fetchSystemAlerts()
     fetchUnreadNotifications()
+    fetchGarages()
   }, [])
 
   const displayedAlerts = useMemo<SystemAlert[]>(() => {
@@ -125,9 +138,8 @@ export default function DashboardPage() {
       return {
         ...alert,
         title: hasUnread
-          ? `${unreadNotifications} unread notification${
-              unreadNotifications > 1 ? "s" : ""
-            }`
+          ? `${unreadNotifications} unread notification${unreadNotifications > 1 ? "s" : ""
+          }`
           : "No unread notifications",
         severity: hasUnread ? "WARNING" : "SUCCESS",
         actionLabel: alert.actionLabel ?? "View Inbox",
@@ -138,11 +150,11 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     return {
       totalUsers: users.length,
-      activeGarages: users.filter(
-        (u) => u.role === "GARAGE" && u.status === "ACTIVE"
+      activeGarages: garages.filter(
+        (g) => g.status === "ACTIVE"
       ).length,
-      pendingGarages: users.filter(
-        (u) => u.role === "GARAGE" && u.status === "PENDING"
+      pendingGarages: garages.filter(
+        (g) => g.status === "PENDING"
       ).length,
     }
   }, [users])
