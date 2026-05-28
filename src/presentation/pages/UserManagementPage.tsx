@@ -66,11 +66,10 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`pb-2 -mb-px px-1 font-medium transition border-b-2 ${
-        active
-          ? "border-yellow-400 text-black"
-          : "border-transparent text-gray-500 hover:text-black"
-      }`}
+      className={`pb-2 -mb-px px-1 font-medium transition border-b-2 ${active
+        ? "border-yellow-400 text-black"
+        : "border-transparent text-gray-500 hover:text-black"
+        }`}
     >
       {label}
     </button>
@@ -82,35 +81,53 @@ function UsersTab() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showWarnDialog, setShowWarnDialog] = useState(false)
+  const handleWarnClick = (id: string) => {
+    setSelectedUserId(id)
+    setWarnReason("")
+    setShowWarnDialog(true)
+  }
+
+  const [selectedUserId, setSelectedUserId] =
+    useState<string | null>(null)
+
+  const [warnReason, setWarnReason] = useState("")
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
     warned: 0,
     blocked: 0,
   })
+  const fetchUsersAndStats = async () => {
+    setLoading(true)
+
+    try {
+      const [usersData, statsData] = await Promise.all([
+        repository.findAll(),
+        repository.getStats(),
+      ])
+
+      setUsers(usersData)
+      setStats(statsData)
+
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to load users"
+
+      setError(message)
+
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const repository = useMemo(() => new UserManagementRepositoryImpl(), [])
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const [usersData, statsData] = await Promise.all([
-          repository.findAll(),
-          repository.getStats(),
-        ])
-        setUsers(usersData)
-        setStats(statsData)
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to load users"
-        setError(message)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
-  }, [repository])
+    fetchUsersAndStats()
+  }, [])
 
   const handleSearch = async (term: string) => {
     setSearch(term)
@@ -124,17 +141,28 @@ function UsersTab() {
     setUsers(results)
   }
 
-  const handleWarn = async (id: string) => {
-    const updated = await repository.warnUser(id)
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
+  const handleConfirmWarn = async () => {
+    if (!selectedUserId || !warnReason.trim()) return
+
+    try {
+      await repository.warnUser(
+        selectedUserId,
+        warnReason
+      )
+
+      await fetchUsersAndStats()
+
+      setShowWarnDialog(false)
+      setWarnReason("")
+      setSelectedUserId(null)
+
+    } catch (err: any) {
+      setError(err.message ?? "Failed to warn user")
+    }
   }
   const handleBlock = async (id: string) => {
-    const updated = await repository.blockUser(id)
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
-  }
-  const handleActivate = async (id: string) => {
-    const updated = await repository.activateUser(id)
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
+    await repository.blockUser(id)
+    await fetchUsersAndStats()
   }
 
   const statusColors: Record<string, string> = {
@@ -166,14 +194,14 @@ function UsersTab() {
       title: "Actions",
       render: (_value, row) => (
         <div className="flex gap-2">
-          <Button variant="link" onClick={() => handleWarn(row.id)}>
+          <Button
+            variant="link"
+            onClick={() => handleWarnClick(row.id)}
+          >
             <AlertTriangle className="w-4 h-4" />
           </Button>
           <Button variant="link" onClick={() => handleBlock(row.id)}>
             <Ban className="w-4 h-4" />
-          </Button>
-          <Button variant="link" onClick={() => handleActivate(row.id)}>
-            <CheckCircle className="w-4 h-4" />
           </Button>
         </div>
       ),
@@ -220,6 +248,43 @@ function UsersTab() {
         placeholder="Search users by name or email..."
         onChange={(e) => handleSearch(e.target.value)}
       />
+      <Dialog
+        isOpen={showWarnDialog}
+        onClose={() => setShowWarnDialog(false)}
+        title="Warn User"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setShowWarnDialog(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="primary"
+              onClick={handleConfirmWarn}
+            >
+              Send Warning
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+
+          <p className="text-sm text-gray-600">
+            Please provide a reason for warning this user.
+          </p>
+
+          <textarea
+            value={warnReason}
+            onChange={(e) => setWarnReason(e.target.value)}
+            placeholder="Enter warning reason..."
+            className="w-full border rounded-lg p-3 outline-none min-h-[120px]"
+          />
+
+        </div>
+      </Dialog>
 
       {users.length === 0 && search ? (
         <p className="text-gray-500">No users found for "{search}"</p>

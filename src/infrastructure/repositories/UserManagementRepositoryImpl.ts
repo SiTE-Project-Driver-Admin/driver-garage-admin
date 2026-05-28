@@ -23,8 +23,16 @@ export class UserManagementRepositoryImpl implements UserRepository {
         return response.data
     }
 
-    async warnUser(id: string): Promise<User> {
-        const response = await axiosClient.patch(`/admin/users/${id}/warn`)
+    async warnUser(
+        id: string,
+        reason: string
+    ): Promise<User> {
+
+        const response = await axiosClient.patch(
+            `/admin/users/${id}/warn`,
+            { reason }
+        )
+
         return response.data
     }
 
