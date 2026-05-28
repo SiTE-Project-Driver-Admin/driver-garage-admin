@@ -15,7 +15,15 @@ export interface CommunityReport {
     imageUrl: string | null
     imageUrls: string[]
     authorId: string
+    authorName: string
     createdAt: string
+    author: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+      fullName: string
+    }
   }
 
   reporter: {
