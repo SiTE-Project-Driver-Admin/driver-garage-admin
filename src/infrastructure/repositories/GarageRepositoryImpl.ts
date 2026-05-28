@@ -29,4 +29,15 @@ export class GarageRepositoryImpl implements GarageRepository {
     })
     return response.data
   }
+
+  async getBusinessDocument(id: string): Promise<string> {
+    const response = await axiosClient.get(
+      `/admin/garages-approval/${id}/business-document`,
+      {
+        responseType: "blob",
+      }
+    )
+
+    return URL.createObjectURL(response.data)
+  }
 }

@@ -18,6 +18,7 @@ export default function GarageApprovalsPage() {
     const [error, setError] = useState<string | null>(null)
     const [showModal, setShowModal] = useState(false)
     const [search, setSearch] = useState("")
+    const [businessDocumentUrl, setBusinessDocumentUrl] = useState<string | null>(null)
 
     const repository = new GarageRepositoryImpl()
 
@@ -54,6 +55,11 @@ export default function GarageApprovalsPage() {
         try {
             const garage = await repository.findById(id)
             if (garage) {
+                const documentUrl =
+                    await repository.getBusinessDocument(id)
+
+                setBusinessDocumentUrl(documentUrl)
+
                 setSelectedGarage(garage)
                 setShowModal(true)
             }
@@ -90,15 +96,6 @@ export default function GarageApprovalsPage() {
         PENDING: "bg-yellow-100 text-black-500",
         ACTIVE: "bg-green-100 text-green-800",
         REJECTED: "bg-red-100 text-red-800",
-    }
-
-    const resolvePdfUrl = (url?: string | null): string | null => {
-        if (!url) return null
-        if (/^https?:\/\//i.test(url)) return url
-        const base =
-            (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-            "http://localhost:4000"
-        return `${base.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`
     }
 
     const columns: Column<Garage>[] = [
@@ -181,31 +178,28 @@ export default function GarageApprovalsPage() {
 
                         <div className="mt-4">
                             <p className="font-medium mb-2">Business Document</p>
-                            {(() => {
-                                const pdfUrl = resolvePdfUrl(selectedGarage.businessDocument)
-                                if (!pdfUrl) {
-                                    return (
-                                        <p className="text-gray-500">No document uploaded.</p>
-                                    )
-                                }
-                                return (
-                                    <div className="space-y-2">
-                                        <iframe
-                                            src={pdfUrl}
-                                            title="Business Document"
-                                            className="w-full h-96 border rounded"
-                                        />
-                                        <a
-                                            href={pdfUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-block text-blue-600 underline"
-                                        >
-                                            Open document in new tab
-                                        </a>
-                                    </div>
-                                )
-                            })()}
+                            {businessDocumentUrl ? (
+                                <div className="space-y-2">
+                                    <iframe
+                                        src={businessDocumentUrl}
+                                        title="Business Document"
+                                        className="w-full h-96 border rounded"
+                                    />
+
+                                    <a
+                                        href={businessDocumentUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-block text-blue-600 underline"
+                                    >
+                                        Open document in new tab
+                                    </a>
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">
+                                    No document uploaded.
+                                </p>
+                            )}
                         </div>
                     </>
                 )}
